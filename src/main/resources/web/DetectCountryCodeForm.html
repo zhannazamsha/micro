@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <title>Detect country be phone number</title>
+    <script src="jquery-3.4.1.min.js"></script>
+
+</head>
+<body>
+<form id="form" method="post">
+    <span>Please enter phone number</span><br>
+    <input id="number" name="number" type="text"><br><br>
+    <input type="submit"/><br><br>
+    Result: <span id="result"></span>
+</form>
+
+<script>
+    (function ($) {
+        function processForm(e) {
+            event.preventDefault();
+            $.post("http://localhost:8080/phone", $('#form').serialize(), function (data) {
+                $("#result").html(data);
+            });
+        }
+
+        $('#form').submit(processForm);
+
+    })(jQuery);
+</script>
+
+</body>
+</html>

@@ -6,6 +6,6 @@ import org.springframework.stereotype.Service;
 public class CountryCodeDetectionServiceImpl implements CountryCodeDetectionService {
     @Override
     public String detectCountry(String number) {
-        return null;
+        return "Latvia" + CountryCodesHTMLParsingServiceImpl.COUNTRY_CODE_MAP.get("Latvia");
     }
 }
