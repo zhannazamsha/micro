@@ -16,48 +16,36 @@ import java.util.stream.IntStream;
 public class CountryCodesHTMLParsingServiceImpl implements CountryCodesHTMLParsingService {
 
     public static final Map<String, String> COUNTRY_CODE_MAP = new HashMap<>();
-    public static final String COUNTRY_CODES_LINK = "https://en.wikipedia.org/wiki/List_of_country_calling_codes";
-    public static final String COUNTRY_CODES_HTML_TABLE_HEADER = "Alphabetical_listing_by_country_or_region";
     public static final String TO_REMOVE = "\\[notes \\d\\]";
     public static final List<CountryCode>[][] CODE_MATRIX = new List[10][10];
 
+    public void collectCountryCodes(String url, String countryCodesStartText) throws IOException {
+        Document doc = Jsoup.connect(url).get();
+        collectCountryCodes(doc, countryCodesStartText);
+    }
 
-    public void collectCountryCodes() throws IOException {
-        Document doc = Jsoup.connect(COUNTRY_CODES_LINK).get();
-        parseHTML(doc);
+    public void collectCountryCodes(Document document, String countryCodesStartText) {
+        parseHTML(document, countryCodesStartText);
         createMatrix();
     }
 
-    public void createMatrix() {
+    private void createMatrix() {
+        fillWithEmptyLists();
         COUNTRY_CODE_MAP.entrySet().stream().forEach(item -> {
-            //TODO refactoring is required
-
-            String extractFirstTwoDigits = CodeFormattingHelper
-                    .extractFirstTwoNumbersFromCode(CodeFormattingHelper.removeSpaces(item.getValue()));
-            int first = Integer.parseInt(String.valueOf(extractFirstTwoDigits.charAt(0)));
-            int second = 0;
-            if (extractFirstTwoDigits.length() > 1) {
-                second = Integer.parseInt(String.valueOf(extractFirstTwoDigits.charAt(1)));
-            }
-            if (CODE_MATRIX[first][second] == null) {
-                CODE_MATRIX[first][second] = new ArrayList<CountryCode>();
-            }
-            if (item.getValue().contains(",")) {
-                for (String code : item.getValue().split(",")) {
-                    CODE_MATRIX[first][second].add(new CountryCode().builder().countryName(item.getKey())
-                            .code(CodeFormattingHelper.removeSpaces(code)).build());
+            String codeToAdd = CodeFormattingHelper.removeSpaces(item.getValue());
+            for (String code : codeToAdd.split(",")) {
+                int[] firstTwoDigits = CodeFormattingHelper
+                        .extractFirstTwoNumbersFromCode(code);
+                CODE_MATRIX[firstTwoDigits[0]][firstTwoDigits[1]]
+                        .add(new CountryCode().builder().countryName(item.getKey())
+                                .code(code).build());
                 }
-            } else {
-                CODE_MATRIX[first][second].add(new CountryCode().builder().countryName(item.getKey())
-                        .code(CodeFormattingHelper.removeSpaces(item.getValue())).build());
-            }
-
-            CODE_MATRIX[first][second].sort(CountryCode.codeLengthSort);
         });
+        sortMatrixItems();
     }
 
-    public void parseHTML(Document doc) {
-        Element header = doc.getElementById(COUNTRY_CODES_HTML_TABLE_HEADER);
+    private void parseHTML(Document doc, String countryCodesStartText) {
+        Element header = doc.getElementById(countryCodesStartText);
         Element table = header.parent().nextElementSibling();
         Elements rows = table.select("tr");
 
@@ -66,8 +54,23 @@ public class CountryCodesHTMLParsingServiceImpl implements CountryCodesHTMLParsi
             Elements cols = row.select("td");
             Optional<String> optionalCode = Optional.ofNullable(cols.get(1).text());
             String code = optionalCode.orElse("").replaceAll(TO_REMOVE, "");
-            System.out.println(cols.get(0).text() + " " + code);
             COUNTRY_CODE_MAP.put(cols.get(0).text(), code);
+        });
+    }
+
+    private void fillWithEmptyLists() {
+        IntStream.range(0, CODE_MATRIX.length).forEach(i -> {
+            IntStream.range(0, CODE_MATRIX[i].length).forEach(j -> {
+                CODE_MATRIX[i][j] = new ArrayList<>();
+            });
+        });
+    }
+
+    private void sortMatrixItems() {
+        IntStream.range(0, CODE_MATRIX.length).forEach(i -> {
+            IntStream.range(0, CODE_MATRIX[i].length).forEach(j -> {
+                CODE_MATRIX[i][j].sort(CountryCode.codeLengthSort);
+            });
         });
     }
 }

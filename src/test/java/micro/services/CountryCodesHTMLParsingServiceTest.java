@@ -9,9 +9,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.io.IOException;
-
-import static micro.services.CountryCodesHTMLParsingServiceImpl.COUNTRY_CODES_LINK;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
@@ -60,24 +57,17 @@ public class CountryCodesHTMLParsingServiceTest {
         }
     }
 
+
+
     @Test
-    public void prseHTML_ShouldBeAdded2ItemsToMap() {
+    public void prseHTML_Tree() {
         Document doc = Jsoup.parse(HTML_TABLE_MOCK);
-        countryCodesHTMLParsingService.parseHTML(doc);
-        assertThat(CountryCodesHTMLParsingServiceImpl.COUNTRY_CODE_MAP.size())
-                .isEqualTo(2);
+        countryCodesHTMLParsingService.collectCountryCodes(doc, "Alphabetical_listing_by_country_or_region");
+        assertThat(CountryCodesHTMLParsingServiceImpl.CODE_MATRIX[9][3].size())
+                .isEqualTo(1);
+        assertThat(CountryCodesHTMLParsingServiceImpl.CODE_MATRIX[9][3].get(0).getCode())
+                .isEqualTo("+93");
 
-    }
-
-    @Test
-    public void prseHTML_Tree() throws IOException {
-        Document doc = Jsoup.connect(COUNTRY_CODES_LINK).get();
-        countryCodesHTMLParsingService.parseHTML(doc);
-        countryCodesHTMLParsingService.createMatrix();
-        assertThat(CountryCodesHTMLParsingServiceImpl.CODE_MATRIX[1][8].size())
-                .isEqualTo(9);
-        assertThat(CountryCodesHTMLParsingServiceImpl.CODE_MATRIX[2][5].get(0).getCode())
-                .isEqualTo("+25524");
     }
 
 }

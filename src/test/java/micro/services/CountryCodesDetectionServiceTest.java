@@ -1,5 +1,7 @@
 package micro.services;
 
+import micro.api.exceptions.CountryNotFound;
+import micro.api.exceptions.WrongPhoneNumberFormat;
 import micro.domain.CountryCode;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,7 +11,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,7 +31,9 @@ public class CountryCodesDetectionServiceTest {
     }
 
     @Before
-    public void setUp() throws ParseException {
+    public void setUp() {
+        CountryCodesHTMLParsingServiceImpl.CODE_MATRIX[4][0] = new ArrayList<CountryCode>();
+        CountryCodesHTMLParsingServiceImpl.CODE_MATRIX[4][7] = new ArrayList<CountryCode>();
         CountryCodesHTMLParsingServiceImpl.CODE_MATRIX[4][4] = new ArrayList<CountryCode>() {{
             add(new CountryCode().builder().code("+44").countryName("UK").build());
         }};
@@ -45,8 +48,16 @@ public class CountryCodesDetectionServiceTest {
         assertThat(country)
                 .isEqualTo("Sweden");
 
-
     }
 
+    @Test(expected = CountryNotFound.class)
+    public void detectCountry_searchForNotExistingCountry_NotFoundExceptionIsReturned() {
+        String country = countryCodesDetectionService.detectCountry("+47 568940");
+    }
+
+    @Test(expected = WrongPhoneNumberFormat.class)
+    public void detectCountry_wrongPhoneFormat_WrongPhoneNumberFormatExceptionIsReturned() {
+        String country = countryCodesDetectionService.detectCountry("47 568940");
+    }
 
 }
