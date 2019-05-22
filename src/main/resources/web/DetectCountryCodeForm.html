@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Detect country be phone number</title>
-    <script src="jquery-3.4.1.min.js"></script>
+
 
 </head>
 <body>
@@ -15,17 +15,36 @@
 </form>
 
 <script>
-    (function ($) {
+    document.addEventListener('DOMContentLoaded',
+        function (event) {
         function processForm(e) {
-            event.preventDefault();
-            $.post("http://localhost:8080/phone", $('#form').serialize(), function (data) {
-                $("#result").html(data);
-            });
+            let form = document.forms["form"];
+            let fd = new FormData(form);
+            let number;
+            for (let [key, prop] of fd) {
+                if (key == 'number') {
+                    number = prop;
+                }
+            }
+            fetch('http://localhost:8080/phone', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain;charset=UTF-8',
+                },
+                body: number
+            })
+                .then(r => r.text().then(data => ({status: r.status, body: data})))
+                .then(obj => document.querySelector('#result').innerHTML = obj.body)
+
         }
 
-        $('#form').submit(processForm);
 
-    })(jQuery);
+            document.querySelector('#form').addEventListener("submit", function (e) {
+                e.preventDefault();
+                processForm(e);
+            });
+
+        });
 </script>
 
 </body>
